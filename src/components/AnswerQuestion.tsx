@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, HelpCircle, RefreshCw, Sparkles, Smile, X, ShieldAlert, Award } from 'lucide-react';
+import { Heart, Sparkles, Smile, Award } from 'lucide-react';
 import { ESCAPE_PHRASES, SUCCESS_MESSAGES, MEME_PRESETS } from '../templates';
 import ConfettiEffect from './Confetti';
 
@@ -18,13 +18,13 @@ export default function AnswerQuestion({ question, memeId, customYesMsg, onGoBac
   const [tidakRotate, setTidakRotate] = useState(0);
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [showPhrase, setShowPhrase] = useState(false);
-
-  const [isCheaterPopup, setIsCheaterPopup] = useState(false);
   const [noAttempts, setNoAttempts] = useState(0);
   const [successMessage, setSuccessMessage] = useState('');
+  const [frozen, setFrozen] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const noButtonRef = useRef<HTMLButtonElement>(null);
+  const frozenTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (customYesMsg && customYesMsg.trim() !== '') {
@@ -37,64 +37,108 @@ export default function AnswerQuestion({ question, memeId, customYesMsg, onGoBac
 
   const preset = MEME_PRESETS.find(p => p.id === memeId) || MEME_PRESETS[0];
 
-  const moveTidakButton = () => {
+  const moveTidakButton = useCallback(() => {
+    if (!cardRef.current || !noButtonRef.current) return;
+
     setNoAttempts(prev => prev + 1);
     setPhraseIndex((prev) => (prev + 1) % ESCAPE_PHRASES.length);
     setShowPhrase(true);
 
-    if (cardRef.current && noButtonRef.current) {
-      const card = cardRef.current.getBoundingClientRect();
-      const maxX = card.width * 0.38;
-      const maxY = 90;
+    const card = cardRef.current.getBoundingClientRect();
+    const maxX = card.width * 0.35;
+    const maxY = 80;
 
-      let newX = (Math.random() - 0.5) * maxX * 2;
-      let newY = (Math.random() - 0.5) * maxY * 2;
+    let newX = (Math.random() - 0.5) * maxX * 2;
+    let newY = (Math.random() - 0.5) * maxY * 2;
 
-      if (Math.abs(newX) < 30 && Math.abs(newY) < 30) {
-        newX = newX > 0 ? newX + 45 : newX - 45;
-        newY = newY > 0 ? newY + 45 : newY - 45;
-      }
-
-      const randomScale = 0.6 + Math.random() * 0.6;
-      const randomRotation = (Math.random() - 0.5) * 60;
-
-      setTidakPos({ x: newX, y: newY });
-      setTidakScale(randomScale);
-      setTidakRotate(randomRotation);
+    if (Math.abs(newX) < 35 && Math.abs(newY) < 35) {
+      newX = newX > 0 ? newX + 50 : newX - 50;
+      newY = newY > 0 ? newY + 50 : newY - 50;
     }
-  };
 
+    const randomScale = 0.55 + Math.random() * 0.55;
+    const randomRotation = (Math.random() - 0.5) * 70;
+
+    setTidakPos({ x: newX, y: newY });
+    setTidakScale(randomScale);
+    setTidakRotate(randomRotation);
+  }, []);
+
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (frozen) return;
+
+    setFrozen(true);
+
+    if (frozenTimerRef.current) {
+      clearTimeout(frozenTimerRef.current);
+    }
+    frozenTimerRef.current = setTimeout(() => {
+      setFrozen(false);
+    }, 250);
+
+    moveTidakButton();
+  }, [frozen, moveTidakButton]);
+
+  // Desktop: mouse proximity detection
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (isYes || !noButtonRef.current) return;
+      if (isYes || !noButtonRef.current || frozen) return;
 
       const button = noButtonRef.current;
       const rect = button.getBoundingClientRect();
-
       const btnCenterX = rect.left + rect.width / 2;
       const btnCenterY = rect.top + rect.height / 2;
-
       const dx = e.clientX - btnCenterX;
       const dy = e.clientY - btnCenterY;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
-      if (distance < 85) {
+      if (distance < 95) {
         moveTidakButton();
       }
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [isYes]);
+  }, [isYes, frozen, moveTidakButton]);
 
-  const handleNoClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsCheaterPopup(true);
-    moveTidakButton();
-  };
+  // Mobile: touch proximity detection
+  useEffect(() => {
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isYes || !noButtonRef.current || frozen || !e.touches.length) return;
+
+      const touch = e.touches[0];
+      const button = noButtonRef.current;
+      const rect = button.getBoundingClientRect();
+      const btnCenterX = rect.left + rect.width / 2;
+      const btnCenterY = rect.top + rect.height / 2;
+      const dx = touch.clientX - btnCenterX;
+      const dy = touch.clientY - btnCenterY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < 110) {
+        moveTidakButton();
+      }
+    };
+
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    return () => {
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [isYes, frozen, moveTidakButton]);
+
+  // Cleanup frozen timer on unmount
+  useEffect(() => {
+    return () => {
+      if (frozenTimerRef.current) {
+        clearTimeout(frozenTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleYesClick = () => {
     setIsYes(true);
@@ -190,16 +234,15 @@ export default function AnswerQuestion({ question, memeId, customYesMsg, onGoBac
                   scale: tidakScale,
                   rotate: tidakRotate,
                 }}
-                transition={{ type: 'spring', stiffness: 220, damping: 14 }}
-                onMouseEnter={moveTidakButton}
-                onTouchStart={(e) => {
-                  e.preventDefault();
-                  moveTidakButton();
-                }}
-                onClick={handleNoClick}
+                transition={{ type: 'spring', stiffness: 400, damping: 12 }}
+                onMouseEnter={() => { if (!frozen) moveTidakButton(); }}
+                onPointerDown={handlePointerDown}
                 id="btn-answer-no"
-                className="bg-[#4A4A4A] hover:bg-neutral-800 text-white font-extrabold text-sm md:text-base py-3 md:py-4 px-4 md:px-5 rounded-2xl shadow-md cursor-pointer border-b-4 border-neutral-700 select-none absolute right-2 top-4 z-10"
-                style={{ touchAction: 'none' }}
+                className="bg-[#4A4A4A] hover:bg-neutral-800 text-white font-extrabold text-sm md:text-base py-3 md:py-4 px-4 md:px-5 rounded-2xl shadow-md border-b-4 border-neutral-700 select-none absolute right-2 top-4 z-10"
+                style={{
+                  touchAction: 'none',
+                  pointerEvents: frozen ? 'none' : 'auto',
+                }}
               >
                 <span>Tidak ❌</span>
               </motion.button>
@@ -279,7 +322,6 @@ export default function AnswerQuestion({ question, memeId, customYesMsg, onGoBac
                 <h3 className="text-2xl md:text-3xl font-black font-display text-[#4A4A4A] drop-shadow-xs leading-tight">
                   {preset.title} 🎉
                 </h3>
-
                 <div className="bg-white/95 border border-pink-100 rounded-3xl p-4 md:p-5 shadow-xs inline-block max-w-sm">
                   <p className="text-gray-700 font-extrabold text-sm md:text-lg leading-relaxed">
                     {successMessage}
@@ -303,39 +345,6 @@ export default function AnswerQuestion({ question, memeId, customYesMsg, onGoBac
                 </button>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {isCheaterPopup && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 30 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 30 }}
-              className="bg-white rounded-3xl p-5 max-w-xs w-full text-center shadow-2xl border-2 border-rose-300 relative overflow-hidden"
-            >
-              <div className="text-4xl mb-3 animate-bounce">🛡️🤪</div>
-              <h4 className="text-lg font-black text-rose-600 mb-2 font-display flex items-center justify-center gap-1.5">
-                <ShieldAlert className="w-5 h-5" />
-                <span>Cheater Detected!</span>
-              </h4>
-              <p className="text-gray-600 text-xs font-semibold leading-relaxed mb-4">
-                Wah, jari kamu lincah banget! Tapi mohon maaf, pilihan <strong className="text-rose-500">"Tidak"</strong> sedang mudik ke luar negeri atau tidak tersedia di galaksi ini. Silakan pilih "Iya" ya! 😂🚀
-              </p>
-              <button
-                onClick={() => setIsCheaterPopup(false)}
-                className="w-full bg-rose-500 hover:bg-rose-600 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs transition-all shadow-md cursor-pointer"
-              >
-                Kembali & Pilih Iya 💖
-              </button>
-            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
