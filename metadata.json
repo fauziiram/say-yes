@@ -1,0 +1,6 @@
+{
+  "name": "Pencet Iya",
+  "description": "Website interaktif lucu dan menggemaskan untuk mengirim pertanyaan jail ke pasangan atau teman.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
