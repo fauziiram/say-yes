@@ -206,14 +206,6 @@ export default function AnswerQuestion({ question, memeId, customYesMsg, onGoBac
               </motion.h2>
             </div>
 
-            {noAttempts > 0 && (
-              <div className="text-center mb-4 z-10">
-                <span className="text-[10px] bg-pink-50 text-[#FF748D] font-bold px-3 py-1 rounded-full border border-pink-100 shadow-xs">
-                  Gagal Nolak: {noAttempts}x 😜
-                </span>
-              </div>
-            )}
-
             <div className="relative min-h-[80px] mt-auto pt-4 border-t border-pink-50">
               <motion.button
                 whileHover={{ scale: 1.1 }}
@@ -328,12 +320,6 @@ export default function AnswerQuestion({ question, memeId, customYesMsg, onGoBac
                   </p>
                 </div>
               </div>
-
-              {noAttempts > 0 && (
-                <p className="text-xs text-gray-500 font-bold px-2">
-                  *Fakta seru: Kamu sempat mencoba menolak sebanyak <strong>{noAttempts} kali</strong> sebelum akhirnya pasrah! 😂🏆
-                </p>
-              )}
 
               <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center items-center">
                 <button
