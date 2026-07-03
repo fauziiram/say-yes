@@ -169,13 +169,10 @@ export default function AnswerQuestion({ question, memeId, customYesMsg, onGoBac
               🍬
             </div>
 
-            <div className="flex items-center justify-between text-xs text-gray-400 font-bold border-b border-pink-50 pb-3 mb-4 mt-3">
+             <div className="flex items-center justify-between text-xs text-gray-400 font-bold border-b border-pink-50 pb-3 mb-4 mt-3">
               <span className="flex items-center gap-1.5 text-[#FF748D] z-10">
                 <Heart className="w-4 h-4 fill-[#FF748D] text-[#FF748D] animate-pulse" />
                 <span className="hidden sm:inline">Pesan Spesial Buatmu</span>
-              </span>
-              <span className="bg-[#FFF0F2] text-[#FF748D] px-2.5 py-0.5 rounded-full text-[10px] z-10 whitespace-nowrap">
-                Prank Interaktif 🤫
               </span>
             </div>
 
