@@ -44,3 +44,14 @@ npm run preview
 ```bash
 npm run lint
 ```
+
+## Pembuat / Creator
+
+- **Fauzi Ramdani**
+  - GitHub: [@fauziiram](https://github.com/fauziiram)
+  - Instagram: [@fauzirammm](https://instagram.com/fauzirammm)
+  - LinkedIn: [Fauzi Ramdani](https://www.linkedin.com/in/fauzi-ramdani-747978249/)
+
+## License
+
+SPDX-License-Identifier: Apache-2.0

@@ -321,15 +321,7 @@ export default function AnswerQuestion({ question, memeId, customYesMsg, onGoBac
                 </div>
               </div>
 
-              <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center items-center">
-                <button
-                  onClick={onGoBack}
-                  className="bg-[#FFF0F2] hover:bg-[#ffe0e4] text-[#FF748D] font-extrabold py-3 px-6 rounded-2xl transition-all text-xs md:text-sm shadow-xs flex items-center gap-1.5 cursor-pointer w-full sm:w-auto justify-center"
-                >
-                  <Smile className="w-4 h-4 text-[#FF748D]" />
-                  <span>Bikin Prank Baru</span>
-                </button>
-              </div>
+              {/* Button 'Bikin Prank Baru' removed per user request */}
             </div>
           </motion.div>
         )}
